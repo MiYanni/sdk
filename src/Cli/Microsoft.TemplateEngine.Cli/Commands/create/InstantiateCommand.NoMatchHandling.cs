@@ -41,10 +41,10 @@ namespace Microsoft.TemplateEngine.Cli.Commands
 
             foreach (InvalidTemplateOptionResult option in optionsWithInvalidValues)
             {
+                //skip templates where option is not available
                 if (templatesToAnalyze.All(
                     template =>
                         template.InvalidTemplateOptions.Any(x => x.Equals(option))
-                        //skip templates where option is not available
                         || template.InvalidTemplateOptions.Any(x => x.ErrorKind == InvalidTemplateOptionResult.Kind.InvalidName && x.InputFormat == option.InputFormat)))
                 {
                     if (option.IsChoice)

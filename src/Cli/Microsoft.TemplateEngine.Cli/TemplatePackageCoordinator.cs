@@ -270,11 +270,11 @@ namespace Microsoft.TemplateEngine.Cli
                             success = NewCommandStatus.InstallFailed;
                         }
 
+                        // force is not supported by update flow
                         await _templatePackageDisplay.DisplayInstallResultAsync(
                            updateResult.UpdateRequest.TemplatePackage.DisplayName,
                            updateResult,
                            commandArgs.ParseResult,
-                           // force is not supported by update flow
                            force: false,
                            _templatePackageManager,
                            _engineEnvironmentSettings,

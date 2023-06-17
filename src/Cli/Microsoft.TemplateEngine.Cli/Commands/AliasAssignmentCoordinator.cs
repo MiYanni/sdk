@@ -108,9 +108,9 @@ namespace Microsoft.TemplateEngine.Cli.Commands
             foreach (string longName in longNameOverrides)
             {
                 string optionName = "--" + longName;
+                //if we use parameter name, we should also check if there is any other parameter which defines this long name.
+                //in case it is, then we should give precedence to other parameter to use it.
                 if ((!noLongOverrideDefined && !isAliasTaken(optionName))
-                    //if we use parameter name, we should also check if there is any other parameter which defines this long name.
-                    //in case it is, then we should give precedence to other parameter to use it.
                     || (noLongOverrideDefined && !isAliasTaken(optionName) && !isLongNamePredefined(optionName)))
                 {
                     aliases.Add(optionName);

@@ -157,12 +157,12 @@ namespace Microsoft.TemplateEngine.Cli
 
             try
             {
+                //in case outputPath is set, TemplateCreator will not create folder in case name is specified.
+                //consider fixing it in complex
                 instantiateResult = await _templateCreator.InstantiateAsync(
                     templateArgs.Template,
                     templateArgs.Name,
                     fallbackName,
-                    //in case outputPath is set, TemplateCreator will not create folder in case name is specified.
-                    //consider fixing it in complex
                     _cliTemplateEngineHost.IsCustomOutputPath ? _cliTemplateEngineHost.OutputPath : null,
                     templateArgs.TemplateParameters,
                     templateArgs.IsForceFlagSpecified,

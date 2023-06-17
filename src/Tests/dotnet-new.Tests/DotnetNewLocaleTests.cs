@@ -146,6 +146,7 @@ Error: The template 'name' (TestAssets.Invalid.Localiation.ValidationFailure) ha
             string tmpTemplateLocation = CreateTemporaryFolder();
             TestUtils.DirectoryCopy(validTestTemplateLocation, tmpTemplateLocation, copySubDirs: true);
 
+            //TODO: replace with de-DE translation when translation is ready
             new DotnetNewCommand(_log, "-i", tmpTemplateLocation)
                 .WithCustomHive(home)
                 .WithWorkingDirectory(workingDir)
@@ -155,7 +156,6 @@ Error: The template 'name' (TestAssets.Invalid.Localiation.ValidationFailure) ha
                 .ExitWith(0)
                 .And
                 .NotHaveStdErr()
-                //TODO: replace with de-DE translation when translation is ready
                 .And.NotHaveStdOutContaining("Warnung: Failed to read or parse localization file ").And.NotHaveStdOutContaining("localize/templatestrings.de-DE.json")
                 .And.HaveStdOutContaining($"Erfolg: {tmpTemplateLocation} installierte die folgenden Vorlagen:").And.HaveStdOutContaining("TemplateWithLocalization")
                 .And.HaveStdOutContaining("name_de-DE:äÄßöÖüÜ");
@@ -166,6 +166,7 @@ Error: The template 'name' (TestAssets.Invalid.Localiation.ValidationFailure) ha
                 Path.Combine(tmpTemplateLocation, ".template.config", "localize", "templatestrings.de-DE.json"),
                 overwrite: true);
 
+            //TODO: replace with de-DE translation when translation is ready
             new DotnetNewCommand(_log, "TestAssets.TemplateWithLocalization")
                 .WithCustomHive(home)
                 .WithWorkingDirectory(workingDir)
@@ -173,7 +174,6 @@ Error: The template 'name' (TestAssets.Invalid.Localiation.ValidationFailure) ha
                 .Execute()
                 .Should()
                 .ExitWith(0)
-                //TODO: replace with de-DE translation when translation is ready
                 .And.HaveStdOutContaining("Warnung: Fehler beim Lesen oder parsen der Lokalisierungsdatei ").And.HaveStdOutContaining("localize/templatestrings.de-DE.json")
                 .And.HaveStdOutContaining("Die Vorlage \"name\" wurde erfolgreich erstellt.").And.NotHaveStdOutContaining("name_de-DE:äÄßöÖüÜ");
         }

@@ -63,6 +63,7 @@ namespace Microsoft.TemplateEngine.Cli.TemplateSearch
                         .OfType<TemplateFilterOptionDefinition>()
                         .Select(filter => filter.TemplateMatchFilter(commandArgs.GetFilterValue(filter)));
 
+                //TODO: implement it for template options matching, for now the filter just returns empty collection.
                 IEnumerable<TemplateGroupMatchInfo> matchInformation =
                     templateGroups.Select(
                         group =>
@@ -70,7 +71,6 @@ namespace Microsoft.TemplateEngine.Cli.TemplateSearch
                                 group,
                                 groupFilters,
                                 templateFilters,
-                                //TODO: implement it for template options matching, for now the filter just returns empty collection.
                                 CliFilters.EmptyTemplateParameterFilter()));
 
                 return matchInformation

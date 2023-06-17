@@ -91,7 +91,7 @@ namespace Microsoft.DotNet.Configurer
                     else
                     {
                         // The instructions in this message only apply to Linux (various distros).
-                        // OSPlatform.FreeBSD would also see this message, which is acceptable since we have no specific FreeBSD instructions.
+                        // OSPlatform.FreeBSD would also see this message, which is acceptable since we have no specific FreeBSD instructions to display.
                         PrintFirstTimeMessageAspNetCertificateLinux();
                     }
                 }

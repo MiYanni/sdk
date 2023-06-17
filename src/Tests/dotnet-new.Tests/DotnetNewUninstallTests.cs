@@ -335,6 +335,7 @@ namespace Microsoft.DotNet.Cli.New.IntegrationTests
                 .And
                 .NotHaveStdErr();
 
+            //                .And.HaveStdErrContaining("To list the templates installed in a package, use dotnet new <new option> <package name>")
             new DotnetNewCommand(_log, commandName, "console")
                 .WithCustomHive(home)
                 .WithWorkingDirectory(CreateTemporaryFolder())
@@ -343,7 +344,6 @@ namespace Microsoft.DotNet.Cli.New.IntegrationTests
                 .And.HaveStdErrContaining("The template package 'console' is not found")
                 .And.HaveStdErrContaining("The template 'console' is included to the packages:")
                 .And.HaveStdErrContaining("   Microsoft.DotNet.Common.ProjectTemplates.5.0::5.0.0 (contains 2 templates)")
-                //                .And.HaveStdErrContaining("To list the templates installed in a package, use dotnet new <new option> <package name>")
                 .And.HaveStdErrContaining("To uninstall the template package use:")
                 .And.HaveStdErrContaining("   dotnet new uninstall Microsoft.DotNet.Common.ProjectTemplates.5.0");
         }
