@@ -87,6 +87,13 @@ namespace Microsoft.TemplateEngine.Cli.Commands
             IsHidden = true
         };
 
+        internal static Argument<string> NameArgument { get; } = new Argument<string>("name")
+        {
+            Description = SymbolStrings.TemplateCommand_Option_Name,
+            Arity = new ArgumentArity(0, 0),
+            IsHidden = true
+        };
+
         internal static Argument<string[]> RemainingArguments { get; } = new Argument<string[]>("template-args")
         {
             Description = SymbolStrings.Command_Instantiate_Argument_TemplateOptions,

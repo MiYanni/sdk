@@ -50,6 +50,8 @@ namespace Microsoft.TemplateEngine.Cli.Commands
                 AddAlias(item);
             }
 
+            this.AddArgument(SharedOptions.NameArgument);
+
             this.AddOption(SharedOptions.OutputOption);
             this.AddOption(SharedOptions.NameOption);
             this.AddOption(SharedOptions.DryRunOption);

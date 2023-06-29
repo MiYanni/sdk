@@ -23,7 +23,14 @@ namespace Microsoft.TemplateEngine.Cli.Commands
         internal static Option<string> NameOption { get; } = new Option<string>(new string[] { "-n", "--name" })
         {
             Description = SymbolStrings.TemplateCommand_Option_Name,
-            Arity = new ArgumentArity(1, 1)
+            Arity = new ArgumentArity(1, 1),
+            IsHidden = true
+        };
+
+        internal static Argument<string> NameArgument { get; } = new Argument<string>("name")
+        {
+            Description = SymbolStrings.TemplateCommand_Option_Name,
+            Arity = new ArgumentArity(0, 1)
         };
 
         internal static Option<bool> DryRunOption { get; } = new Option<bool>("--dry-run")

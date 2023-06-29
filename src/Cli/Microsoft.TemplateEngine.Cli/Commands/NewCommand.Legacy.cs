@@ -126,6 +126,7 @@ namespace Microsoft.TemplateEngine.Cli.Commands
         private void BuildLegacySymbols(Func<ParseResult, ITemplateEngineHost> hostBuilder)
         {
             this.AddArgument(ShortNameArgument);
+            //this.AddArgument(NameArgument);
             this.AddArgument(RemainingArguments);
 
             //legacy options

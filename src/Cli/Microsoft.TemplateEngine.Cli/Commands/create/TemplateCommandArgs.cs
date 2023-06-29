@@ -18,7 +18,14 @@ namespace Microsoft.TemplateEngine.Cli.Commands
             ParentCommand = parentCommand ?? throw new ArgumentNullException(nameof(parentCommand));
             RootCommand = GetRootCommand(parentCommand);
 
-            Name = parseResult.GetValueForOptionOrNull(SharedOptions.NameOption);
+            var nameArgument = parseResult.GetValue(SharedOptions.NameArgument);
+            var nameOption = parseResult.GetValueForOptionOrNull(SharedOptions.NameOption);
+            if (nameArgument is not null && nameOption is not null)
+            {
+                throw new InvalidOperationException($"Name argument '{nameArgument}' and name option (-n) '{nameOption}' have both been provided. Only one may be provided at a time.");
+            }
+            Name = nameArgument ?? nameOption;
+
             IsForceFlagSpecified = parseResult.GetValue(SharedOptions.ForceOption);
             IsDryRun = parseResult.GetValue(SharedOptions.DryRunOption);
             NoUpdateCheck = parseResult.GetValue(SharedOptions.NoUpdateCheckOption);

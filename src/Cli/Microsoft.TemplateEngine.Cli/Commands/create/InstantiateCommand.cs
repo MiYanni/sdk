@@ -22,6 +22,7 @@ namespace Microsoft.TemplateEngine.Cli.Commands
             : base(hostBuilder, "create", SymbolStrings.Command_Instantiate_Description)
         {
             this.AddArgument(ShortNameArgument);
+            this.AddArgument(SharedOptions.NameArgument);
             this.AddArgument(RemainingArguments);
 
             this.AddOption(SharedOptions.OutputOption);
@@ -434,6 +435,7 @@ namespace Microsoft.TemplateEngine.Cli.Commands
 
                 Parser parser = ParserFactory.CreateParser(command);
                 ParseResult parseResult = parser.Parse(args.RemainingArguments ?? Array.Empty<string>());
+
                 return (command, parseResult);
             }
             catch (InvalidTemplateParametersException e)

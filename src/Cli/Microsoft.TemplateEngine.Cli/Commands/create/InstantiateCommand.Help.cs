@@ -282,7 +282,6 @@ namespace Microsoft.TemplateEngine.Cli.Commands
         {
             List<Option> optionsToShow = new()
             {
-                SharedOptions.NameOption,
                 SharedOptions.OutputOption,
                 SharedOptions.DryRunOption,
                 SharedOptions.ForceOption,
@@ -375,6 +374,7 @@ namespace Microsoft.TemplateEngine.Cli.Commands
                     new[]
                     {
                         shortName,
+                        HelpStrings.Text_UsageNamePart,
                         context.HelpBuilder.LocalizationResources.HelpUsageOptions(),
                         HelpStrings.Text_UsageTemplateOptionsPart
                     });
@@ -480,7 +480,12 @@ namespace Microsoft.TemplateEngine.Cli.Commands
             }
             if (showArguments)
             {
-                yield return CommandLineUtils.FormatArgumentUsage(command.Arguments.ToArray());
+                var arguments = command.Arguments.ToList();
+                if (command is NewCommand)
+                {
+                    arguments.Insert(1, SharedOptions.NameArgument);
+                }
+                yield return CommandLineUtils.FormatArgumentUsage(arguments);
             }
 
             if (showSubcommands)
