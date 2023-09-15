@@ -670,6 +670,10 @@ namespace Microsoft.NET.Sdk.WorkloadManifestReader
                 WorkloadPackKind.Template => false,
                 _ => true
             };
+
+            public bool IsSingleFilePack => Kind.Equals(WorkloadPackKind.Library) || Kind.Equals(WorkloadPackKind.Template);
+
+            public bool IsInstalled => IsSingleFilePack ? File.Exists(Path) : Directory.Exists(Path);
         }
 
         public class WorkloadInfo

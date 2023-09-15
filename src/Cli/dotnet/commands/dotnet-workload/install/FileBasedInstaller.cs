@@ -13,7 +13,6 @@ using NuGet.Common;
 using NuGet.Versioning;
 using static Microsoft.NET.Sdk.WorkloadManifestReader.WorkloadResolver;
 
-
 namespace Microsoft.DotNet.Workloads.Workload.Install
 {
     internal class FileBasedInstaller : IInstaller
@@ -62,26 +61,19 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             _packageSourceLocation = packageSourceLocation;
         }
 
-        public IWorkloadInstallationRecordRepository GetWorkloadInstallationRecordRepository()
-        {
-            return _installationRecordRepository;
-        }
+        public IWorkloadInstallationRecordRepository GetWorkloadInstallationRecordRepository() => _installationRecordRepository;
 
         public void ReplaceWorkloadResolver(IWorkloadResolver workloadResolver)
         {
             _workloadResolver = workloadResolver;
         }
 
-        IEnumerable<PackInfo> GetPacksInWorkloads(IEnumerable<WorkloadId> workloadIds)
-        {
-            var packs = workloadIds
-                .SelectMany(workloadId => _workloadResolver.GetPacksInWorkload(workloadId))
+        IEnumerable<PackInfo> GetPacksInWorkloads(IEnumerable<WorkloadId> workloadIds) =>
+            workloadIds
+                .SelectMany(_workloadResolver.GetPacksInWorkload)
                 .Distinct()
-                .Select(packId => _workloadResolver.TryGetPackInfo(packId))
+                .Select(_workloadResolver.TryGetPackInfo)
                 .Where(pack => pack != null);
-
-            return packs;
-        }
 
         public void InstallWorkloads(IEnumerable<WorkloadId> workloadIds, SdkFeatureBand sdkFeatureBand, ITransactionContext transactionContext, DirectoryPath? offlineCache = null)
         {
@@ -89,7 +81,6 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
 
             foreach (var packInfo in packInfos)
             {
-                _reporter.WriteLine(string.Format(LocalizableStrings.InstallingPackVersionMessage, packInfo.ResolvedPackageId, packInfo.Version));
                 var tempDirsToDelete = new List<string>();
                 var tempFilesToDelete = new List<string>();
                 bool shouldRollBackPack = false;
@@ -97,50 +88,47 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
                 transactionContext.Run(
                     action: () =>
                     {
-                        if (!PackIsInstalled(packInfo))
+                        if (packInfo.IsInstalled)
                         {
-                            shouldRollBackPack = true;
-                            string packagePath;
-                            if (offlineCache == null || !offlineCache.HasValue)
-                            {
-                                packagePath = _nugetPackageDownloader
-                                    .DownloadPackageAsync(new PackageId(packInfo.ResolvedPackageId),
-                                        new NuGetVersion(packInfo.Version),
-                                        _packageSourceLocation).GetAwaiter().GetResult();
-                                tempFilesToDelete.Add(packagePath);
-                            }
-                            else
-                            {
-                                _reporter.WriteLine(string.Format(LocalizableStrings.UsingCacheForPackInstall, packInfo.ResolvedPackageId, packInfo.Version, offlineCache));
-                                packagePath = Path.Combine(offlineCache.Value.Value, $"{packInfo.ResolvedPackageId}.{packInfo.Version}.nupkg");
-                                if (!File.Exists(packagePath))
-                                {
-                                    throw new Exception(string.Format(LocalizableStrings.CacheMissingPackage, packInfo.ResolvedPackageId, packInfo.Version, offlineCache));
-                                }
-                            }
+                            _reporter.WriteLine(LocalizableStrings.WorkloadPackAlreadyInstalledMessage, packInfo.ResolvedPackageId, packInfo.Version);
+                            return;
+                        }
 
-                            if (!Directory.Exists(Path.GetDirectoryName(packInfo.Path)))
-                            {
-                                Directory.CreateDirectory(Path.GetDirectoryName(packInfo.Path));
-                            }
-
-                            if (IsSingleFilePack(packInfo))
-                            {
-                                File.Copy(packagePath, packInfo.Path);
-                            }
-                            else
-                            {
-                                var tempExtractionDir = Path.Combine(_tempPackagesDir.Value, $"{packInfo.ResolvedPackageId}-{packInfo.Version}-extracted");
-                                tempDirsToDelete.Add(tempExtractionDir);
-                                Directory.CreateDirectory(tempExtractionDir);
-                                var packFiles = _nugetPackageDownloader.ExtractPackageAsync(packagePath, new DirectoryPath(tempExtractionDir)).GetAwaiter().GetResult();
-
-                                FileAccessRetrier.RetryOnMoveAccessFailure(() => DirectoryPath.MoveDirectory(tempExtractionDir, packInfo.Path));
-                            }
+                        _reporter.WriteLine(LocalizableStrings.InstallingPackVersionMessage, packInfo.ResolvedPackageId, packInfo.Version);
+                        shouldRollBackPack = true;
+                        string packagePath;
+                        if (offlineCache == null || !offlineCache.HasValue)
+                        {
+                            packagePath = _nugetPackageDownloader.DownloadPackageAsync(
+                                new PackageId(packInfo.ResolvedPackageId),
+                                new NuGetVersion(packInfo.Version),
+                                _packageSourceLocation).GetAwaiter().GetResult();
+                            tempFilesToDelete.Add(packagePath);
                         }
                         else
                         {
-                            _reporter.WriteLine(string.Format(LocalizableStrings.WorkloadPackAlreadyInstalledMessage, packInfo.ResolvedPackageId, packInfo.Version));
+                            _reporter.WriteLine(LocalizableStrings.UsingCacheForPackInstall, packInfo.ResolvedPackageId, packInfo.Version, offlineCache);
+                            packagePath = Path.Combine(offlineCache.Value.Value, $"{packInfo.ResolvedPackageId}.{packInfo.Version}.nupkg");
+                            if (!File.Exists(packagePath))
+                            {
+                                throw new Exception(string.Format(LocalizableStrings.CacheMissingPackage, packInfo.ResolvedPackageId, packInfo.Version, offlineCache));
+                            }
+                        }
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(packInfo.Path));
+
+                        if (packInfo.IsSingleFilePack)
+                        {
+                            File.Copy(packagePath, packInfo.Path);
+                        }
+                        else
+                        {
+                            var tempExtractionDir = Path.Combine(_tempPackagesDir.Value, $"{packInfo.ResolvedPackageId}-{packInfo.Version}-extracted");
+                            tempDirsToDelete.Add(tempExtractionDir);
+                            Directory.CreateDirectory(tempExtractionDir);
+                            _nugetPackageDownloader.ExtractPackageAsync(packagePath, new DirectoryPath(tempExtractionDir)).GetAwaiter().GetResult();
+
+                            FileAccessRetrier.RetryOnMoveAccessFailure(() => DirectoryPath.MoveDirectory(tempExtractionDir, packInfo.Path));
                         }
 
                         WritePackInstallationRecord(packInfo, sdkFeatureBand);
@@ -149,38 +137,34 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
                     {
                         try
                         {
-                            if (shouldRollBackPack)
+                            if (!shouldRollBackPack)
                             {
-                                _reporter.WriteLine(string.Format(LocalizableStrings.RollingBackPackInstall, packInfo.ResolvedPackageId));
-                                DeletePackInstallationRecord(packInfo, sdkFeatureBand);
-                                if (!PackHasInstallRecords(packInfo))
-                                {
-                                    DeletePack(packInfo);
-                                }
+                                return;
+                            }
+
+                            _reporter.WriteLine(LocalizableStrings.RollingBackPackInstall, packInfo.ResolvedPackageId);
+                            DeletePackInstallationRecord(packInfo, sdkFeatureBand);
+                            if (!PackHasInstallRecords(packInfo))
+                            {
+                                DeletePack(packInfo);
                             }
                         }
                         catch (Exception e)
                         {
                             // Don't hide the original error if roll back fails
-                            _reporter.WriteLine(string.Format(LocalizableStrings.RollBackFailedMessage, e.Message));
+                            _reporter.WriteLine(LocalizableStrings.RollBackFailedMessage, e.Message);
                         }
                     },
                     cleanup: () =>
                     {
                         // Delete leftover dirs and files
-                        foreach (var file in tempFilesToDelete)
+                        foreach (var file in tempFilesToDelete.Where(File.Exists))
                         {
-                            if (File.Exists(file))
-                            {
-                                File.Delete(file);
-                            }
+                            File.Delete(file);
                         }
-                        foreach (var dir in tempDirsToDelete)
+                        foreach (var dir in tempDirsToDelete.Where(Directory.Exists))
                         {
-                            if (Directory.Exists(dir))
-                            {
-                                Directory.Delete(dir, true);
-                            }
+                            Directory.Delete(dir, true);
                         }
                     });
             }
@@ -199,7 +183,7 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             string rootInstallDir = WorkloadFileBasedInstall.IsUserLocal(_dotnetDir, _sdkFeatureBand.ToString()) ? _userProfileDir : _dotnetDir;
             var newManifestPath = Path.Combine(rootInstallDir, "sdk-manifests", manifestUpdate.NewFeatureBand, manifestUpdate.ManifestId.ToString());
 
-            _reporter.WriteLine(string.Format(LocalizableStrings.InstallingWorkloadManifest, manifestUpdate.ManifestId, manifestUpdate.NewVersion));
+            _reporter.WriteLine(LocalizableStrings.InstallingWorkloadManifest, manifestUpdate.ManifestId, manifestUpdate.NewVersion);
 
             try
             {
@@ -209,8 +193,10 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
                         var newManifestPackageId = GetManifestPackageId(manifestUpdate.ManifestId, new SdkFeatureBand(manifestUpdate.NewFeatureBand));
                         if (offlineCache == null || !offlineCache.HasValue)
                         {
-                            packagePath = _nugetPackageDownloader.DownloadPackageAsync(newManifestPackageId,
-                                new NuGetVersion(manifestUpdate.NewVersion.ToString()), _packageSourceLocation).GetAwaiter().GetResult();
+                            packagePath = _nugetPackageDownloader.DownloadPackageAsync(
+                                newManifestPackageId,
+                                new NuGetVersion(manifestUpdate.NewVersion.ToString()), _packageSourceLocation)
+                            .GetAwaiter().GetResult();
                         }
                         else
                         {
@@ -278,7 +264,7 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             var packs = GetPacksInWorkloads(workloadIds);
             if (!includeInstalledItems)
             {
-                packs = packs.Where(p => !PackIsInstalled(p));
+                packs = packs.Where(p => !p.IsInstalled);
             }
 
             return packs.Select(p => new WorkloadDownload(p.Id, p.ResolvedPackageId, p.Version)).ToList();
@@ -302,31 +288,17 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
                 {
                     var bandPackRecordPaths = Directory.GetFileSystemEntries(packVersionDir);
 
-                    var unneededBandRecordPaths = bandPackRecordPaths
-                        .Where(recordPath =>
-                            {
-                                var thisRecordFeatureBand = new SdkFeatureBand(Path.GetFileName(recordPath));
-
+                    var unneededBandRecordPaths = bandPackRecordPaths.Where(recordPath =>
+                        {
+                            var thisRecordFeatureBand = new SdkFeatureBand(Path.GetFileName(recordPath));
+                            return
                                 // Mark the pack record for garbage collection if we're cleaning all packs.
-                                if (cleanAllPacks)
-                                {
-                                    return true;
-                                }
-
+                                cleanAllPacks ||
                                 // Mark the pack record for garbage collection if the feature band is not installed/has no workloads installed.
-                                if (!installedSdkFeatureBands.Contains(thisRecordFeatureBand))
-                                {
-                                    return true;
-                                }
-
+                                !installedSdkFeatureBands.Contains(thisRecordFeatureBand) ||
                                 // Mark the pack record for garbage collection if the pack has no corresponding workload installation record and has the current SDK feature band.
-                                if (thisRecordFeatureBand.Equals(_sdkFeatureBand) && !currentBandInstallRecords.Contains(recordPath))
-                                {
-                                    return true;
-                                }
-
-                                return false;
-                            }
+                                (thisRecordFeatureBand.Equals(_sdkFeatureBand) && !currentBandInstallRecords.Contains(recordPath));
+                        }
                     );
 
                     if (!unneededBandRecordPaths.Any())
@@ -345,12 +317,9 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
                     if (!bandPackRecordPaths.Except(unneededBandRecordPaths).Any())
                     {
                         Directory.Delete(packVersionDir);
-                        var deletablePack = GetPackInfo(packVersionDir);
-                        if (deletablePack == null)
-                        {
+                        var deletablePack = GetPackInfo(packVersionDir) ??
                             // Pack no longer exists in manifests, get pack info from installation record
-                            deletablePack = JsonSerializer.Deserialize(jsonPackInfo, typeof(PackInfo)) as PackInfo;
-                        }
+                            JsonSerializer.Deserialize(jsonPackInfo, typeof(PackInfo)) as PackInfo;
                         DeletePack(deletablePack);
                     }
                 }
@@ -392,10 +361,7 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             // perform.
         }
 
-        public PackageId GetManifestPackageId(ManifestId manifestId, SdkFeatureBand featureBand)
-        {
-            return new PackageId($"{manifestId}.Manifest-{featureBand}");
-        }
+        public PackageId GetManifestPackageId(ManifestId manifestId, SdkFeatureBand featureBand) => new($"{manifestId}.Manifest-{featureBand}");
 
         public async Task ExtractManifestAsync(string nupkgPath, string targetPath)
         {
@@ -429,9 +395,9 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
         {
             var installedWorkloads = _installationRecordRepository.GetInstalledWorkloads(sdkFeatureBand);
             return installedWorkloads
-                .SelectMany(workload => _workloadResolver.GetPacksInWorkload(workload))
-                .Select(pack => _workloadResolver.TryGetPackInfo(pack))
-                .Where(pack => pack != null)
+                .SelectMany(_workloadResolver.GetPacksInWorkload)
+                .Select(_workloadResolver.TryGetPackInfo)
+                .Where(packInfo => packInfo != null)
                 .Select(packInfo => GetPackInstallRecordPath(packInfo, sdkFeatureBand));
         }
 
@@ -448,36 +414,25 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             return null;
         }
 
-        private bool PackIsInstalled(PackInfo packInfo)
-        {
-            if (IsSingleFilePack(packInfo))
-            {
-                return File.Exists(packInfo.Path);
-            }
-            else
-            {
-                return Directory.Exists(packInfo.Path);
-            }
-        }
-
         private void DeletePack(PackInfo packInfo)
         {
-            if (PackIsInstalled(packInfo))
+            if (!packInfo.IsInstalled)
             {
-                _reporter.WriteLine(string.Format(LocalizableStrings.DeletingWorkloadPack, packInfo.Id, packInfo.Version));
-                if (IsSingleFilePack(packInfo))
-                {
-                    File.Delete(packInfo.Path);
-                }
-                else
-                {
-                    Directory.Delete(packInfo.Path, true);
-                    var packIdDir = Path.GetDirectoryName(packInfo.Path);
-                    if (!Directory.EnumerateFileSystemEntries(packIdDir).Any())
-                    {
-                        Directory.Delete(packIdDir, true);
-                    }
-                }
+                return;
+            }
+
+            _reporter.WriteLine(LocalizableStrings.DeletingWorkloadPack, packInfo.Id, packInfo.Version);
+            if (packInfo.IsSingleFilePack)
+            {
+                File.Delete(packInfo.Path);
+                return;
+            }
+
+            Directory.Delete(packInfo.Path, true);
+            var packIdDir = Path.GetDirectoryName(packInfo.Path);
+            if (!Directory.EnumerateFileSystemEntries(packIdDir).Any())
+            {
+                Directory.Delete(packIdDir, true);
             }
         }
 
@@ -486,12 +441,9 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
 
         private void WritePackInstallationRecord(PackInfo packInfo, SdkFeatureBand featureBand)
         {
-            _reporter.WriteLine(string.Format(LocalizableStrings.WritingPackInstallRecordMessage, packInfo.Id, packInfo.Version));
+            _reporter.WriteLine(LocalizableStrings.WritingPackInstallRecordMessage, packInfo.Id, packInfo.Version);
             var path = GetPackInstallRecordPath(packInfo, featureBand);
-            if (!Directory.Exists(Path.GetDirectoryName(path)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-            }
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
             File.WriteAllText(path, JsonSerializer.Serialize(packInfo));
         }
 
@@ -521,7 +473,5 @@ namespace Microsoft.DotNet.Workloads.Workload.Install
             var packInstallRecordDir = Path.Combine(_workloadMetadataDir, InstalledPacksDir, "v1", packInfo.Id, packInfo.Version);
             return Directory.Exists(packInstallRecordDir) && Directory.GetFiles(packInstallRecordDir).Any();
         }
-
-        private bool IsSingleFilePack(PackInfo packInfo) => packInfo.Kind.Equals(WorkloadPackKind.Library) || packInfo.Kind.Equals(WorkloadPackKind.Template);
     }
 }

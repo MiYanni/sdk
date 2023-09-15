@@ -146,7 +146,6 @@ namespace Microsoft.DotNet.Cli.Utils
 
         public void WriteLine(string format, params object?[] args) => WriteLine(string.Format(format, args));
 
-
         public static void UseSpinLock(Action action)
         {
             bool lockTaken = false;

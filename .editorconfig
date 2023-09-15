@@ -312,6 +312,8 @@ dotnet_diagnostic.CA1837.severity = warning
 dotnet_diagnostic.CA1838.severity = warning
 # Use 'Environment.CurrentManagedThreadId'
 dotnet_diagnostic.CA1840.severity = warning
+# Avoid using 'Enumerable.Any()' extension method
+dotnet_diagnostic.CA1860.severity = none
 # Consider calling ConfigureAwait on the awaited task
 dotnet_diagnostic.CA2007.severity = warning
 # Do not create tasks without passing a TaskScheduler
