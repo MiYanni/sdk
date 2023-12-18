@@ -16,6 +16,7 @@ internal class CliRegistry
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             // Commands must be both set and get properties for writing data and reading into JSON.
             .Where(pi => pi.PropertyType == typeof(ICommand) && pi.HasPublicSetAndGet())
+            // TODO: Use attribute for CliName
             .ToDictionary(pi => pi.Name);
     }
 
