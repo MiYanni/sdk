@@ -1,83 +1,77 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Text.Json.Serialization;
 using Microsoft.DotNet.Cli.CliSimplify;
 
-namespace Microsoft.DotNet.Cli.commands.dotnet_add2
+namespace Microsoft.DotNet.Cli.commands.dotnet_add2;
+
+public class DotNet : ICliCommand
 {
-    public class Add2 : ICommand
-    {
-        [JsonPropertyName("project")]
-        public string Project { get; set; }
-        //[JsonPropertyName("subCmd")]
-        //public Add2SubCmd SubCommand { get; set; }
-        [JsonPropertyName("package")]
-        public AddPackage Package { get; set; }
-        [JsonPropertyName("reference")]
-        public AddReference Reference { get; set; }
+    [CliPropertyName("add2")]
+    public Add2 Add2 { get; set; }
 
-        private IEnumerable<ICommand> subCommands => [ Package, Reference ];
+    public void Execute() => throw new NotImplementedException();
+}
 
-        public void Execute()
-        {
-            subCommands.FirstOrDefault(sb => sb != null)?.Execute();
-        }
+public class Add2 : ICliCommand
+{
+    [CliPropertyName("project")]
+    public string Project { get; set; }
 
-        public string Parse(string[] args)
-        {
-            var sb = new StringBuilder();
-            for (int i = 0; i < args.Length; i++)
-            {
-                switch (i)
-                {
-                    case 0:
-                        switch (args[i])
-                        {
-                            case "package":
-                            case "reference":
-                                sb.Append($"\"{args[i]}\": {{");
-                                break;
-                            default:
+    [CliPropertyName("package")]
+    public AddPackage Package { get; set; }
 
-                                break;
-                        }
-                        break;
-                    case 1:
-                        break;
-                    case 2:
-                        break;
-                }
-            }
-        }
-    }
+    [CliPropertyName("reference")]
+    public AddReference Reference { get; set; }
 
-    //public class Add2SubCmd
+    public void Execute() => throw new NotImplementedException();
+
+    //public string Parse(string[] args)
     //{
-    //    [JsonPropertyName("package")]
-    //    public AddPackage Package { get; set; }
-    //    [JsonPropertyName("reference")]
-    //    public AddReference Reference { get; set; }
+    //    var sb = new StringBuilder();
+    //    for (int i = 0; i < args.Length; i++)
+    //    {
+    //        switch (i)
+    //        {
+    //            case 0:
+    //                switch (args[i])
+    //                {
+    //                    case "package":
+    //                    case "reference":
+    //                        sb.Append($"\"{args[i]}\": {{");
+    //                        break;
+    //                    default:
+
+    //                        break;
+    //                }
+    //                break;
+    //            case 1:
+    //                break;
+    //            case 2:
+    //                break;
+    //        }
+    //    }
     //}
+}
 
-    public class AddPackage : ICommand
+public class AddPackage : ICliCommand
+{
+    [CliPropertyName("name")]
+    public string Name { get; set; }
+
+    [CliPropertyName("version")]
+    public Version Version { get; set; }
+
+    public void Execute()
     {
-        [JsonPropertyName("name")]
-        public string Name { get; set; }
-        [JsonPropertyName("version")]
-        public Version Version { get; set; }
 
-        public void Execute()
-        {
-
-        }
     }
+}
 
-    public class AddReference : ICommand
+public class AddReference : ICliCommand
+{
+    public void Execute()
     {
-        public void Execute()
-        {
 
-        }
     }
 }

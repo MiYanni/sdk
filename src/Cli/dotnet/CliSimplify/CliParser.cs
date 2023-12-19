@@ -7,7 +7,7 @@ namespace Microsoft.DotNet.Cli.CliSimplify;
 
 internal static class CliParser
 {
-    public static ICommand ParseOrDefault(ICommand root, IEnumerable<string> arguments)
+    public static ICliCommand ParseOrDefault(ICliCommand root, IEnumerable<string> arguments)
     {
         //var commandName = arguments
         var command = CliRegistry.Instance.GetCommandOrDefault(arguments.FirstOrDefault()) ??
