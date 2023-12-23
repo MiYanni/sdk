@@ -5,72 +5,56 @@ using Microsoft.DotNet.Cli.CliSimplify;
 
 namespace Microsoft.DotNet.Cli.commands.dotnet_add2;
 
-public class DotNet : ICliCommand
+public class DotNet : CliCommandBase<DotNet>
 {
-    [CliPropertyName("add2")]
+    public DotNet() : base(null)
+    {
+        // TODO: Find a cleaner way to do this, hopefully.
+        Add2 = new Add2(this);
+    }
+
+    [CliName("add2")]
     public Add2 Add2 { get; set; }
 
-    public void Execute() => throw new NotImplementedException();
+    public override void Execute() => throw new NotImplementedException();
 }
 
-public class Add2 : ICliCommand
+public class Add2(ICliCommand root) : CliCommandBase<Add2>(root)
 {
-    [CliPropertyName("project")]
+    [CliAccessType(CliArgumentAccessType.ValueOnly)]
     public string Project { get; set; }
 
-    [CliPropertyName("package")]
-    public AddPackage Package { get; set; }
+    [CliName("package")]
+    public AddPackage Package { get; set; } = new AddPackage(root);
 
-    [CliPropertyName("reference")]
-    public AddReference Reference { get; set; }
+    [CliName("reference")]
+    public AddReference Reference { get; set; } = new AddReference(root);
 
-    public void Execute() => throw new NotImplementedException();
-
-    //public string Parse(string[] args)
-    //{
-    //    var sb = new StringBuilder();
-    //    for (int i = 0; i < args.Length; i++)
-    //    {
-    //        switch (i)
-    //        {
-    //            case 0:
-    //                switch (args[i])
-    //                {
-    //                    case "package":
-    //                    case "reference":
-    //                        sb.Append($"\"{args[i]}\": {{");
-    //                        break;
-    //                    default:
-
-    //                        break;
-    //                }
-    //                break;
-    //            case 1:
-    //                break;
-    //            case 2:
-    //                break;
-    //        }
-    //    }
-    //}
+    public override void Execute() => throw new NotImplementedException();
 }
 
-public class AddPackage : ICliCommand
+public class AddPackage(ICliCommand root) : CliCommandBase<AddPackage>(root)
 {
-    [CliPropertyName("name")]
+    [CliAccessType(CliArgumentAccessType.ValueOnly)]
+    [CliRequired]
     public string Name { get; set; }
 
-    [CliPropertyName("version")]
+    [CliName("--package-directory")]
+    public string PackageDirectory { get; set; }
+
+    [CliName("--version")]
+    [CliAlias("-v")]
     public Version Version { get; set; }
 
-    public void Execute()
+    public override void Execute()
     {
 
     }
 }
 
-public class AddReference : ICliCommand
+public class AddReference(ICliCommand root) : CliCommandBase<AddReference>(root)
 {
-    public void Execute()
+    public override void Execute()
     {
 
     }

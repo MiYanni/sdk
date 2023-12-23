@@ -7,6 +7,8 @@ namespace Microsoft.DotNet.Cli.CliSimplify;
 
 public interface ICliCommand
 {
+    public ICliCommand Root { get; }
+
     public Dictionary<string, ICliCommand> Ancestors { get; }
 
     public Dictionary<string, CliArgumentMetadata> Metadata { get; }
@@ -16,10 +18,11 @@ public interface ICliCommand
     public void Execute();
 }
 
-internal abstract class CliCommandBase<T> : ICliCommand
+public abstract class CliCommandBase<T> : ICliCommand
 {
-    public CliCommandBase()
+    public CliCommandBase(ICliCommand root)
     {
+        Root = root;
         Ancestors = [];
         //var validProperties = typeof(T)
         //    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -33,11 +36,16 @@ internal abstract class CliCommandBase<T> : ICliCommand
         Metadata = typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             // Properties must be both set and get properties for writing data and reading for Execute.
+            // TODO: Command properties should not need a public Set.
             .Where(pi => pi.HasPublicSetAndGet())
-            .Select(pi => new CliArgumentMetadata
+            // TODO: Check to see that CliArgumentAccessType.NameOnly is used on booleans-only.
+            .Select(pi => new CliArgumentMetadata(this, pi)
             {
-                // TODO: More stuff goes here
-                Name = pi.GetCliPropertyNameAttributeValue() ?? pi.Name,
+                Name = pi.GetCliNameAttributeValue() ?? pi.Name,
+                Aliases = pi.GetCliAliasAttributeValue() ?? [],
+                AccessType = pi.GetCliAccessTypeAttributeValue() ?? CliArgumentAccessType.NameAndValue,
+                IsRequired = pi.HasCliRequiredAttribute(),
+                Position = pi.GetCliPositionAttributeValue() ?? null,
                 // https://stackoverflow.com/a/4963190/294804
                 IsCommand = pi.PropertyType.GetInterface(nameof(ICliCommand)) != null
             })
@@ -50,10 +58,12 @@ internal abstract class CliCommandBase<T> : ICliCommand
         //    .Select(pi => new CliArgumentMetadata
         //    {
         //        // TODO: More stuff goes here
-        //        Name = pi.GetCliPropertyNameAttributeValue() ?? pi.Name
+        //        Name = pi.GetCliNameAttributeValue() ?? pi.Name
         //    })
         //    .ToDictionary(cam => cam.Name);
     }
+
+    public ICliCommand Root { get; }
 
     public Dictionary<string, ICliCommand> Ancestors { get; }
 
@@ -64,13 +74,36 @@ internal abstract class CliCommandBase<T> : ICliCommand
     public abstract void Execute();
 }
 
-public class CliArgumentMetadata
+public class CliArgumentMetadata(ICliCommand command, PropertyInfo propertyInfo)
 {
+    private readonly ICliCommand _command = command;
+    private readonly PropertyInfo _propertyInfo = propertyInfo;
+
     public string Name { get; set; }
     public string[] Aliases { get; set; }
+    public CliArgumentAccessType AccessType { get; set; }
     public bool IsRequired { get; set; }
-    public bool IsFlag { get; set; }
-    public bool IsCommand { get; set; }
     public int? Position { get; set; }
-    public object Value { get; set; }
+    public bool IsCommand { get; set; }
+
+    internal void SetPropertyValue(string value)
+    {
+        // TODO: This code needs a lot of fleshing out with type conversions.
+        // TODO: Create type conversion attribute for complex types. (string to new instance of the type)
+        _propertyInfo.SetValue(_command, Convert.ChangeType(value, _propertyInfo.PropertyType));
+    }
+
+    public object Value => _propertyInfo.GetValue(_command);
+
+    internal bool HasNameOrAlias(string name) => Name == name || Aliases.Contains(name);
+}
+
+public enum CliArgumentAccessType
+{
+    // Default: Both the argument name and value are specified. (Named)
+    NameAndValue,
+    // Only the argument value is present. (Unnamed)
+    ValueOnly,
+    // Only the argument name is present. (Flag)
+    NameOnly
 }
