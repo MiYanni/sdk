@@ -1,0 +1,27 @@
+<Project>
+  <ItemDefinitionGroup>
+    <ProjectToBuild>
+      <RestoreInParallel>false</RestoreInParallel>
+      <BuildInParallel>false</BuildInParallel>
+    </ProjectToBuild>
+  </ItemDefinitionGroup>
+
+  <Choose>
+      <When Condition=" '$(InitializeVMR)' == 'true' ">
+        <!-- VMR bootstrap -->
+        <ItemGroup>
+          <!-- <ProjectToBuild Include="$(RepoRoot)src/VirtualMonoRepo/Tasks/VirtualMonoRepo.Tasks.csproj" BuildInParallel="false" /> -->
+          <!-- <ProjectToBuild Include="$(RepoRoot)src/VirtualMonoRepo/InitializeVMR.proj" BuildInParallel="false" /> -->
+        </ItemGroup>
+      </When>
+
+      <Otherwise>
+        <!-- Regular build -->
+        <ItemGroup>
+          <ProjectToBuild Include="$(RepoRoot)sdk.sln" />
+          <!-- TODO: Add condition for pack-only build here. -->
+          <ProjectToBuild Include="$(RepoRoot)src\Installer\Installer.sln" />
+        </ItemGroup>
+      </Otherwise>
+  </Choose>
+</Project>
