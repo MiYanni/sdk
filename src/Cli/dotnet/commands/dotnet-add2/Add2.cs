@@ -42,9 +42,10 @@ public class AddPackage(ICliCommand root) : CliCommandBase<AddPackage>(root)
     [CliName("--package-directory")]
     public string PackageDirectory { get; set; }
 
+    // TODO: Make this Version type. Using string so casting doesn't explode.
     [CliName("--version")]
     [CliAlias("-v")]
-    public Version Version { get; set; }
+    public string Version { get; set; }
 
     public override void Execute()
     {

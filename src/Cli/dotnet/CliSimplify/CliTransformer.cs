@@ -9,7 +9,7 @@ namespace Microsoft.DotNet.Cli.CliSimplify
     {
         public static string ToJsonString(string[] args)
         {
-
+            return string.Empty;
         }
     }
 }

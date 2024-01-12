@@ -58,7 +58,13 @@ internal static class CliParser
             {
                 if (metadata.IsCommand)
                 {
+                    if (requiredArguments.Any())
+                    {
+                        throw new ArgumentException($"Not all required arguments have been specified for the command {argument}");
+                    }
+
                     currentCommand = (ICliCommand)metadata.Value;
+                    requiredArguments = new Queue<CliArgumentMetadata>(currentCommand.Metadata.Values.Where(m => m.IsRequired && !m.IsCommand).OrderBy(m => m.Position));
                     continue;
                 }
 

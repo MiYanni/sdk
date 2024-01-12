@@ -13,6 +13,7 @@ using NuGet.Frameworks;
 using CommandResult = System.CommandLine.Parsing.CommandResult;
 using LocalizableStrings = Microsoft.DotNet.Cli.Utils.LocalizableStrings;
 using Microsoft.DotNet.Workloads.Workload;
+using Microsoft.DotNet.Cli.CliSimplify;
 
 namespace Microsoft.DotNet.Cli
 {
@@ -71,7 +72,10 @@ namespace Microsoft.DotNet.Cli
 
                 try
                 {
-                    return ProcessArgs(args, startupTime);
+                    var command = CliParser.Parse(new commands.dotnet_add2.DotNet(), args);
+                    command.Execute();
+                    return 0;
+                    //return ProcessArgs(args, startupTime);
                 }
                 catch (Exception e) when (e.ShouldBeDisplayedAsError())
                 {
