@@ -9,7 +9,9 @@ public interface ICliCommand
 {
     public ICliCommand Root { get; }
 
-    public Dictionary<string, ICliCommand> Ancestors { get; }
+    public ICliCommand Parent { get; }
+
+    //public Dictionary<string, ICliCommand> Ancestors { get; }
 
     public Dictionary<string, CliArgumentMetadata> Metadata { get; }
 
@@ -20,10 +22,11 @@ public interface ICliCommand
 
 public abstract class CliCommandBase<T> : ICliCommand
 {
-    public CliCommandBase(ICliCommand root)
+    public CliCommandBase(ICliCommand root, ICliCommand parent)
     {
         Root = root;
-        Ancestors = [];
+        Parent = parent;
+        //Ancestors = [];
         //var validProperties = typeof(T)
         //    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         //    // Properties must be both set and get properties for writing data and reading for Execute.
@@ -35,8 +38,8 @@ public abstract class CliCommandBase<T> : ICliCommand
 
         Metadata = typeof(T)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            // Properties must be both set and get properties for writing data and reading for Execute.
-            // TODO: Command properties should not need a public Set.
+            // Properties must be both set and get properties for writing data and reading for Execute and JSON deserialization.
+            // Command properties only use the Set for JSON deserialization.
             .Where(pi => pi.HasPublicSetAndGet())
             // TODO: Check to see that CliArgumentAccessType.NameOnly is used on booleans-only.
             .Select(pi => new CliArgumentMetadata(this, pi)
@@ -65,7 +68,9 @@ public abstract class CliCommandBase<T> : ICliCommand
 
     public ICliCommand Root { get; }
 
-    public Dictionary<string, ICliCommand> Ancestors { get; }
+    //public Dictionary<string, ICliCommand> Ancestors { get; }
+
+    public ICliCommand Parent { get; }
 
     public Dictionary<string, CliArgumentMetadata> Metadata { get; }
 

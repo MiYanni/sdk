@@ -90,7 +90,7 @@ internal static class CliParser
                 continue;
             }
 
-            // TODO: This doesn't handle positionality or multiple optional value only arguments.
+            // TODO: This doesn't handle positionality or multiple optional value-only arguments.
             var optionalValueOnly = currentCommand.Metadata.Values.FirstOrDefault(m => !m.IsRequired && !m.IsCommand && m.AccessType == CliArgumentAccessType.ValueOnly);
             if (optionalValueOnly != null)
             {
