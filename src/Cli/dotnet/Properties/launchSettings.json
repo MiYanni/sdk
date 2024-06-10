@@ -1,7 +1,8 @@
 {
   "profiles": {
     "dotnet": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "add2 C:\\Workspace\\Projects\\ConsoleApp9\\ConsoleApp9.csproj package Newtonsoft.Json"
     }
   }
 }

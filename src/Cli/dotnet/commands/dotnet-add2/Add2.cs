@@ -9,6 +9,7 @@ using Microsoft.DotNet.Tools.Common;
 using NuGet.Frameworks;
 using Microsoft.DotNet.Tools.MSBuild;
 using Microsoft.DotNet.Tools.NuGet;
+using Microsoft.DotNet.CommandFactory;
 
 namespace Microsoft.DotNet.Cli.commands.dotnet_add2;
 
@@ -103,7 +104,7 @@ public class AddPackage(ICliCommand root, ICliCommand parent) : CliCommandBase<A
             GetProjectDependencyGraph(projectPath, tempDgPath);
         }
 
-        NuGetCommand.Run(TransformArgs(Name, tempDgPath, projectPath));
+        NuGetCommand.Run(TransformArgs(Name, projectPath, tempDgPath, IsNoRestore));
 
         if (File.Exists(tempDgPath))
         {
@@ -129,6 +130,8 @@ public class AddPackage(ICliCommand root, ICliCommand parent) : CliCommandBase<A
             "-nologo"
         };
 
+        // TODO: Currently errors here:
+        // Unable to create dependency graph file for project 'C:\Workspace\Projects\ConsoleApp9\ConsoleApp9.csproj'. Cannot add package reference.
         var result = new MSBuildForwardingApp(args).Execute();
         if (result != 0)
         {
@@ -136,33 +139,19 @@ public class AddPackage(ICliCommand root, ICliCommand parent) : CliCommandBase<A
         }
     }
 
-    private static string[] TransformArgs(string packageId, string tempDgPath, string projectFilePath)
-    {
-        var args = new List<string>
-        {
-            "package",
-            "add",
-            "--package",
-            packageId,
-            "--project",
-            projectFilePath
-        };
-
+    private static string[] TransformArgs(string packageId, string projectFilePath, string tempDgPath, bool isNoRestore) =>
+    [
+        "package",
+        "add",
+        "--package",
+        packageId,
+        "--project",
+        projectFilePath,
         // TODO: Need a way to allow for forwarding arguments from the global space.
-        //args.AddRange(_parseResult.OptionValuesToBeForwarded(AddPackageParser.GetCommand()).SelectMany(a => a.Split(' ', 2)));
-
-        if (!string.IsNullOrEmpty(tempDgPath))
-        {
-            args.Add("--dg-file");
-            args.Add(tempDgPath);
-        }
-        else
-        {
-            args.Add("--no-restore");
-        }
-
-        return args.ToArray();
-    }
+        //.. _parseResult.OptionValuesToBeForwarded(AddPackageParser.GetCommand()).SelectMany(a => a.Split(' ', 2)),
+        .. !string.IsNullOrEmpty(tempDgPath) ? new string[] { "--dg-file", tempDgPath } : [],
+        .. isNoRestore ? new string[] { "--no-restore" } : [],
+    ];
 }
 
 public class AddReference(ICliCommand root, ICliCommand parent) : CliCommandBase<AddReference>(root, parent)
@@ -190,6 +179,9 @@ public class AddReference(ICliCommand root, ICliCommand parent) : CliCommandBase
         PathUtility.EnsureAllPathsExist(references, CommonLocalizableStrings.CouldNotFindProjectOrDirectory, true);
         var projectReferences = references.Select((r) => MsbuildProject.FromFileOrDirectory(projects, r, IsInteractive));
 
+        // TODO: This is currently erroring when evaluating the project:
+        // Project `C:\Workspace\Projects\ConsoleApp9\ConsoleApp9.csproj` could not be evaluated. Evaluation failed with following error:
+        // The SDK 'Microsoft.NET.Sdk' specified could not be found.C:\Workspace\Projects\ConsoleApp9\ConsoleApp9.csproj.
         var frameworks = project.GetTargetFrameworks();
         if (!string.IsNullOrEmpty(Framework))
         {
