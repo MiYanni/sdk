@@ -1,0 +1,2 @@
+dotnet add2 C:\Workspace\Projects\ConsoleApp9\ConsoleApp9.csproj package Newtonsoft.Json
+dotnet add2 C:\Workspace\Projects\ConsoleApp9\ConsoleApp9.csproj reference C:\Workspace\Projects\ConsoleApp8\ConsoleApp8.csproj
