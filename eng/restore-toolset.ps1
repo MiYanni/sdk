@@ -70,7 +70,7 @@ DOSKEY killdotnet=taskkill /F /IM dotnet.exe /T ^& taskkill /F /IM VSTest.Consol
   $scriptContents = @"
 `$host.ui.RawUI.WindowTitle = "SDK Build ($RepoRoot)"
 `$env:DOTNET_MULTILEVEL_LOOKUP=0
-`# https://aka.ms/vs/unsigned-dotnet-debugger-lib
+# https://aka.ms/vs/unsigned-dotnet-debugger-lib
 `$env:VSDebugger_ValidateDotnetDebugLibSignatures=0
 
 `$env:DOTNET_ROOT="$env:DOTNET_INSTALL_DIR"

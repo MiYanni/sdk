@@ -79,6 +79,7 @@ public abstract class CliCommandBase<T> : ICliCommand
     public abstract void Execute();
 }
 
+// TODO: Would this make sense to be derived from JsonPropertyInfo? It stores similar data.
 public class CliArgumentMetadata(ICliCommand command, PropertyInfo propertyInfo)
 {
     private readonly ICliCommand _command = command;

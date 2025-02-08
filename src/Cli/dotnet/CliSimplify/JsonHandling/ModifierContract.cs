@@ -15,6 +15,8 @@ namespace Microsoft.DotNet.Cli.CliSimplify.JsonHandling
         // https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/custom-contracts#example-increment-a-propertys-value
         public static void CliAttributeHandler(JsonTypeInfo typeInfo)
         {
+            // This is processing individual properties of the command.
+            // It needs a way to store the additional information along with the property itself. Maybe some kind of lookup in the base command?
             foreach (var propertyInfo in typeInfo.Properties)
             {
                 var name = propertyInfo.GetAttributeOrDefault<CliNameAttribute>();
