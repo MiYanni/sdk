@@ -19,7 +19,7 @@ namespace Microsoft.DotNet.Cli.CliSimplify.JsonHandling
     {
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            //TODO: Need to define Json structure for storing everything (meaning metadata), reading it, and then storing it back 
+            //TODO: Need to define Json structure for storing everything (meaning metadata), reading it, and then storing it back
 
             //DateTimeOffset.ParseExact(reader.GetString()!, "MM/dd/yyyy", CultureInfo.InvariantCulture);
             return default;
