@@ -13,6 +13,8 @@ using NuGet.Frameworks;
 using CommandResult = System.CommandLine.Parsing.CommandResult;
 using LocalizableStrings = Microsoft.DotNet.Cli.Utils.LocalizableStrings;
 using Microsoft.DotNet.Workloads.Workload;
+using System.Text.Json;
+using System.Reflection;
 
 namespace Microsoft.DotNet.Cli
 {
@@ -71,7 +73,22 @@ namespace Microsoft.DotNet.Cli
 
                 try
                 {
-                    return ProcessArgs(args, startupTime);
+                    var options = new JsonWriterOptions { Indented = true };
+                    using var stream = new MemoryStream();
+                    using var writer = new Utf8JsonWriter(stream, options);
+
+                    writer.WriteStartObject();
+
+                    TraverseCli(Parser.Instance.RootCommand, writer);
+
+                    writer.WriteEndObject();
+                    writer.Flush();
+
+                    string json = Encoding.UTF8.GetString(stream.ToArray());
+                    Console.WriteLine(json);
+
+                    return 0;
+                    //return ProcessArgs(args, startupTime);
                 }
                 catch (Exception e) when (e.ShouldBeDisplayedAsError())
                 {
@@ -105,6 +122,78 @@ namespace Microsoft.DotNet.Cli
                 if (perLogEventListener != null)
                 {
                     perLogEventListener.Dispose();
+                }
+            }
+
+            static void TraverseCli(CliCommand command, Utf8JsonWriter writer)
+            {
+                writer.WriteString("Primitive", typeof(CliCommand).FullName);
+                writer.WriteString(nameof(command.Description), command.Description);
+                writer.WriteBoolean(nameof(command.Hidden), command.Hidden);
+
+                foreach (var symbol in command.Children)
+                {
+                    if (symbol is CliCommand subCommand)
+                    {
+                        writer.WriteStartObject(subCommand.Name);
+                        TraverseCli(subCommand, writer);
+                        writer.WriteEndObject();
+                        continue;
+                    }
+
+                    if (symbol is CliOption option)
+                    {
+                        writer.WriteStartObject(option.Name);
+
+                        writer.WriteString("Primitive", typeof(CliOption).FullName);
+                        writer.WriteString(nameof(option.HelpName), option.HelpName);
+                        writer.WriteString(nameof(option.Description), option.Description);
+
+                        var internalArgument = typeof(CliOption).GetProperties(BindingFlags.Instance | BindingFlags.NonPublic).First(pi => pi.Name == "Argument").GetValue(option) as CliArgument;
+                        writer.WriteString(nameof(internalArgument.ValueType), internalArgument.ValueType.FullName);
+
+                        writer.WriteStartArray(nameof(option.Aliases));
+                        foreach(var alias in option.Aliases)
+                        {
+                            writer.WriteStringValue(alias);
+                        }
+                        writer.WriteEndArray();
+
+                        writer.WriteStartObject(nameof(option.Arity));
+                        writer.WriteNumber(nameof(option.Arity.MinimumNumberOfValues), option.Arity.MinimumNumberOfValues);
+                        writer.WriteNumber(nameof(option.Arity.MaximumNumberOfValues), option.Arity.MaximumNumberOfValues);
+                        writer.WriteEndObject();
+
+                        writer.WriteBoolean(nameof(option.Required), option.Required);
+                        writer.WriteBoolean(nameof(option.Hidden), option.Hidden);
+                        writer.WriteBoolean(nameof(option.HasDefaultValue), option.HasDefaultValue);
+                        writer.WriteBoolean(nameof(option.Recursive), option.Recursive);
+                        writer.WriteBoolean(nameof(option.AllowMultipleArgumentsPerToken), option.AllowMultipleArgumentsPerToken);
+
+                        writer.WriteEndObject();
+                        continue;
+                    }
+
+                    if (symbol is CliArgument argument)
+                    {
+                        writer.WriteStartObject(argument.Name);
+
+                        writer.WriteString("Primitive", typeof(CliArgument).FullName);
+                        writer.WriteString(nameof(argument.HelpName), argument.HelpName);
+                        writer.WriteString(nameof(argument.Description), argument.Description);
+                        writer.WriteString(nameof(argument.ValueType), argument.ValueType.FullName);
+
+                        writer.WriteStartObject(nameof(argument.Arity));
+                        writer.WriteNumber(nameof(argument.Arity.MinimumNumberOfValues), argument.Arity.MinimumNumberOfValues);
+                        writer.WriteNumber(nameof(argument.Arity.MaximumNumberOfValues), argument.Arity.MaximumNumberOfValues);
+                        writer.WriteEndObject();
+
+                        writer.WriteBoolean(nameof(argument.Hidden), argument.Hidden);
+                        writer.WriteBoolean(nameof(argument.HasDefaultValue), argument.HasDefaultValue);
+
+                        writer.WriteEndObject();
+                        continue;
+                    }
                 }
             }
         }
