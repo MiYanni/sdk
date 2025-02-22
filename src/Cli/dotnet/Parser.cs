@@ -67,6 +67,8 @@ namespace Microsoft.DotNet.Cli
 
         public static readonly CliOption<bool> ListRuntimesOption = new("--list-runtimes");
 
+        public static readonly CliOption<bool> CliSchemaOption = new("--cli-schema");
+
         // Argument
         public static readonly CliArgument<string> DotnetSubCommand = new("subcommand") { Arity = ArgumentArity.ZeroOrOne, Hidden = true };
 
@@ -103,6 +105,7 @@ namespace Microsoft.DotNet.Cli
             rootCommand.Options.Add(InfoOption);
             rootCommand.Options.Add(ListSdksOption);
             rootCommand.Options.Add(ListRuntimesOption);
+            rootCommand.Options.Add(CliSchemaOption);
 
             // Add argument
             rootCommand.Arguments.Add(DotnetSubCommand);
