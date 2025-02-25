@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text.Json;
 using Microsoft.DotNet.Cli.Utils;
 using Microsoft.DotNet.Cli.Utils.Extensions;
+using Microsoft.TemplateEngine.Utils;
+using NuGet.Packaging;
 using LocalizableStrings = Microsoft.DotNet.Cli.Utils.LocalizableStrings;
 using RuntimeEnvironment = Microsoft.DotNet.Cli.Utils.RuntimeEnvironment;
 
@@ -59,20 +61,56 @@ namespace Microsoft.DotNet.Cli
 
         public static void PrintCliSchema()
         {
-            var options = new JsonWriterOptions { Indented = true };
-            using var stream = new MemoryStream();
-            using var writer = new Utf8JsonWriter(stream, options);
+            var arguments = new List<CliArgument>();
+            var options = new List<CliOption>();
+            var commands = new List<CliCommand>();
 
-            writer.WriteStartObject();
+            TraverseCli2(Parser.Instance.RootCommand, arguments, options, commands);
 
-            TraverseCli(Parser.Instance.RootCommand, writer);
+            //Console.WriteLine("Arguments:");
+            //arguments.Select(a => a.Name).Distinct().Order().ForEach(Console.WriteLine);
 
-            writer.WriteEndObject();
-            writer.Flush();
+            //Console.WriteLine("Options:");
+            //options.Select(a => a.Name).Distinct().Order().ForEach(Console.WriteLine);
 
-            string json = Encoding.UTF8.GetString(stream.ToArray());
-            Console.WriteLine(json);
+            //Console.WriteLine("Commands:");
+            //commands.Select(a => a.Name).Distinct().Order().ForEach(Console.WriteLine);
+
+            Console.WriteLine("Options:");
+            options.SelectMany(a => a.Aliases).Distinct().Order().ForEach(Console.WriteLine);
+
+            Console.WriteLine("Commands:");
+            commands.SelectMany(a => a.Aliases).Distinct().Order().ForEach(Console.WriteLine);
         }
+
+        private static void TraverseCli2(CliCommand command, IList<CliArgument> arguments, IList<CliOption> options, IList<CliCommand> commands)
+        {
+            commands.Add(command);
+            arguments.AddRange(command.Arguments);
+            options.AddRange(command.Options);
+
+            foreach (var subCommand in command.Subcommands)
+            {
+                TraverseCli2(subCommand, arguments, options, commands);
+            }
+        }
+
+        //public static void PrintCliSchema()
+        //{
+        //    var options = new JsonWriterOptions { Indented = true };
+        //    using var stream = new MemoryStream();
+        //    using var writer = new Utf8JsonWriter(stream, options);
+
+        //    writer.WriteStartObject();
+
+        //    TraverseCli(Parser.Instance.RootCommand, writer);
+
+        //    writer.WriteEndObject();
+        //    writer.Flush();
+
+        //    string json = Encoding.UTF8.GetString(stream.ToArray());
+        //    Console.WriteLine(json);
+        //}
 
         private static void TraverseCli(CliCommand command, Utf8JsonWriter writer)
         {
