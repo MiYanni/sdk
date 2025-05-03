@@ -39,6 +39,7 @@ internal static class SolutionCommandParser
         command.Arguments.Add(SlnArgument);
         command.Subcommands.Add(SolutionAddCommandParser.GetCommand());
         command.Subcommands.Add(SolutionListCommandParser.GetCommand());
+        //command.Subcommands.Add(SolutionListCommandParser.Command);
         command.Subcommands.Add(SolutionRemoveCommandParser.GetCommand());
         command.Subcommands.Add(SolutionMigrateCommandParser.GetCommand());
 

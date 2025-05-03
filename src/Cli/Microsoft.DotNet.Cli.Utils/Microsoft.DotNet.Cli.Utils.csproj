@@ -37,10 +37,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Runtime"
-        ExcludeAssets="all"
-        Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETCoreApp'"
-        GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Build.Runtime" ExcludeAssets="all" Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' == '.NETCoreApp'" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
     <PackageReference Include="NuGet.Versioning" />
     <PackageReference Include="NuGet.Packaging" />

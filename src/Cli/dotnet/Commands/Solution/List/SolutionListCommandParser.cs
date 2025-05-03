@@ -20,6 +20,8 @@ public static class SolutionListCommandParser
         return Command;
     }
 
+    //public static Command Command { get; } = ConstructCommand();
+
     private static Command ConstructCommand()
     {
         Command command = new("list", CliCommandStrings.ListAppFullName);
