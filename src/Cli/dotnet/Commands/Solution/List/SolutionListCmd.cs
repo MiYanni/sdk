@@ -8,7 +8,7 @@ namespace Microsoft.DotNet.Cli.Commands.Solution.List;
 
 public class SolutionListCmd(ICliCommand root, ICliCommand parent) : CliCommand<SolutionListCmd>(root, parent, "list", CliCommandStrings.ListAppFullName)
 {
-    [CliName("--no-restore")]
+    [CliName("--solution-folders")]
     [CliDescription(typeof(CliCommandStrings), nameof(CliCommandStrings.ListSolutionFoldersArgumentDescription))]
     public bool DisplaySolutionFolders { get; set; }
 
