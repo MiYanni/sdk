@@ -55,6 +55,8 @@ jobs:
     - ${{ insert }}: ${{ parameters.variables }}
     dependsOn: ${{ parameters.dependsOn }}
     preSteps: ${{ parameters.preSteps }}
+    ${{ if ne(variables['Build.DefinitionName'], 'dotnet-sdk-official-ci') }}:
+      microbuildUseESRP: false
     templateContext:
       sdl:
         binskim:
