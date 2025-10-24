@@ -150,6 +150,16 @@ public class Telemetry : ITelemetry
             var config = TelemetryConfiguration.CreateDefault();
             config.TelemetryChannel = persistenceChannel;
             config.ConnectionString = ConnectionString;
+
+            // Optional file logging if env var is set
+            var diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
+            if (!string.IsNullOrWhiteSpace(diskLogPath))
+            {
+                config.TelemetryProcessorChainBuilder
+                    .Use(next => new DiskLogTelemetryProcessor(next, diskLogPath))
+                    .Build();
+            }
+
             _client = new TelemetryClient(config);
             _client.Context.Session.Id = CurrentSessionId;
             _client.Context.Device.OperatingSystem = CLIRuntimeEnvironment.OperatingSystem;
