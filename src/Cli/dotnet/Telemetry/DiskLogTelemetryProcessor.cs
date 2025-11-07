@@ -5,35 +5,37 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using NuGet.Packaging;
 
 namespace Microsoft.DotNet.Cli.Telemetry;
 
-internal class DiskLogTelemetryProcessor(ITelemetryProcessor next, string path) : ITelemetryProcessor
+internal class DiskLogTelemetryProcessor(ITelemetryProcessor next) : ITelemetryProcessor
 {
     private readonly ITelemetryProcessor _next = next;
-    private readonly string _path = path;
     private static readonly JsonSerializerOptions s_jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = false };
+    private static readonly List<object> s_records = [];
 
     public void Process(ApplicationInsights.Channel.ITelemetry item)
     {
+        s_records.Add(CreateRecord(item));
+        _next.Process(item);
+    }
+
+    public static void WriteLog(string logPath)
+    {
         try
         {
-            var recordObject = CreateRecord(item);
-            var record = JsonNode.Parse(JsonSerializer.Serialize(recordObject, s_jsonOptions));
-
-            var jsonText = !File.Exists(_path) ? """{"records":[]}""" : File.ReadAllText(_path);
+            var jsonText = !File.Exists(logPath) ? """{"records":[]}""" : File.ReadAllText(logPath);
             var root = JsonNode.Parse(jsonText)!;
             var recordsArray = root["records"]!.AsArray();
-            recordsArray.Add(record);
+            recordsArray.AddRange(s_records.Select(r => JsonNode.Parse(JsonSerializer.Serialize(r, s_jsonOptions))));
             root["records"] = recordsArray;
-            File.AppendAllText(_path, root.ToJsonString(s_jsonOptions));
+            File.AppendAllText(logPath, root.ToJsonString(s_jsonOptions));
         }
         catch
         {
-            // Swallow any exceptions to avoid interfering with the telemetry pipeline.
+            // Swallow any exceptions to avoid interfering with telemetry flushing/exit.
         }
-
-        _next.Process(item);
     }
 
     private static object CreateRecord(ApplicationInsights.Channel.ITelemetry item) => item switch

@@ -20,6 +20,7 @@ public class Telemetry : ITelemetry
     private FrozenDictionary<string, string>? _commonProperties = null;
     private FrozenDictionary<string, double>? _commonMeasurements = null;
     private Task? _trackEventTask = null;
+    private string? _diskLogPath;
 
     private const string ConnectionString = "InstrumentationKey=74cc1c9e-3e6e-4d05-b3fc-dde9101d0254";
 
@@ -117,6 +118,11 @@ public class Telemetry : ITelemetry
         }
 
         _trackEventTask.Wait();
+
+        if (!string.IsNullOrWhiteSpace(_diskLogPath))
+        {
+            DiskLogTelemetryProcessor.WriteLog(_diskLogPath);
+        }
     }
 
     // Adding dispose on graceful shutdown per https://github.com/microsoft/ApplicationInsights-dotnet/issues/1152#issuecomment-518742922
@@ -151,12 +157,11 @@ public class Telemetry : ITelemetry
             config.TelemetryChannel = persistenceChannel;
             config.ConnectionString = ConnectionString;
 
-            // Optional file logging if env var is set
-            var diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
-            if (!string.IsNullOrWhiteSpace(diskLogPath))
+            _diskLogPath ??= Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
+            if (!string.IsNullOrWhiteSpace(_diskLogPath))
             {
                 config.TelemetryProcessorChainBuilder
-                    .Use(next => new DiskLogTelemetryProcessor(next, diskLogPath))
+                    .Use(next => new DiskLogTelemetryProcessor(next))
                     .Build();
             }
 
