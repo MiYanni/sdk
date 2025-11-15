@@ -157,7 +157,7 @@ public class Telemetry : ITelemetry
             config.TelemetryChannel = persistenceChannel;
             config.ConnectionString = ConnectionString;
 
-            _diskLogPath ??= Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
+            _diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
             if (!string.IsNullOrWhiteSpace(_diskLogPath))
             {
                 config.TelemetryProcessorChainBuilder
