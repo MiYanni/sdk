@@ -17,7 +17,8 @@ internal class DiskLogTelemetryProcessor(ITelemetryProcessor next) : ITelemetryP
 
     public void Process(ApplicationInsights.Channel.ITelemetry item)
     {
-        s_records.Add(CreateRecord(item));
+        //s_records.Add(CreateRecord(item));
+        s_records.Add(item);
         _next.Process(item);
     }
 
