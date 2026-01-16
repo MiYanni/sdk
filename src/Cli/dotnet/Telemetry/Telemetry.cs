@@ -195,11 +195,7 @@ public class Telemetry : ITelemetry
             var eventProperties = GetEventProperties(properties);
             eventProperties ??= new Dictionary<string, string>();
             eventProperties.Add("event id", Guid.NewGuid().ToString());
-            eventProperties = eventProperties.OrderBy(p => p.Key).ToDictionary();
-
             var eventMeasurements = GetEventMeasures(measurements);
-            eventMeasurements ??= new Dictionary<string, double>();
-            eventMeasurements = eventMeasurements.OrderBy(p => p.Key).ToDictionary();
 
             _client.TrackEvent(PrependProducerNamespace(eventName), eventProperties, eventMeasurements);
             Activity.Current?.AddEvent(CreateActivityEvent(eventName, eventProperties, eventMeasurements));
@@ -215,8 +211,7 @@ public class Telemetry : ITelemetry
         IDictionary<string, string>? properties,
         IDictionary<string, double>? measurements)
     {
-        var tags = MakeTags(properties, measurements) ?? [];
-        tags = [.. tags.ToDictionary().OrderBy(t => t.Key)];
+        var tags = MakeTags(properties, measurements);
         return new ActivityEvent(
             PrependProducerNamespace(eventName),
             tags: tags);

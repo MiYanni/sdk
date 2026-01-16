@@ -13,12 +13,14 @@ internal class DiskLogTelemetryProcessor(ITelemetryProcessor next) : ITelemetryP
 {
     private readonly ITelemetryProcessor _next = next;
     private static readonly JsonSerializerOptions s_jsonOptions = new(JsonSerializerDefaults.Web) { WriteIndented = false };
-    private static readonly List<object> s_records = [];
+    private static readonly List<object> s_events = [];
 
     public void Process(ApplicationInsights.Channel.ITelemetry item)
     {
-        //s_records.Add(CreateRecord(item));
-        s_records.Add(item);
+        if (item is EventTelemetry @event)
+        {
+            s_events.Add(CreateEventJsonModel(@event));
+        }
         _next.Process(item);
     }
 
@@ -26,12 +28,12 @@ internal class DiskLogTelemetryProcessor(ITelemetryProcessor next) : ITelemetryP
     {
         try
         {
-            var jsonText = !File.Exists(logPath) ? """{"records":[]}""" : File.ReadAllText(logPath);
+            var jsonText = !File.Exists(logPath) ? """{"events":[]}""" : File.ReadAllText(logPath);
             var root = JsonNode.Parse(jsonText)!;
-            var recordsArray = root["records"]!.AsArray();
-            recordsArray.AddRange(s_records.Select(r => JsonNode.Parse(JsonSerializer.Serialize(r, s_jsonOptions))));
-            root["records"] = recordsArray;
-            File.AppendAllText(logPath, root.ToJsonString(s_jsonOptions));
+            var eventsArray = root["events"]!.AsArray();
+            eventsArray.AddRange(s_events.Select(e => JsonNode.Parse(JsonSerializer.Serialize(e, s_jsonOptions))));
+            root["events"] = eventsArray;
+            File.WriteAllText(logPath, root.ToJsonString(s_jsonOptions));
         }
         catch
         {
@@ -39,46 +41,11 @@ internal class DiskLogTelemetryProcessor(ITelemetryProcessor next) : ITelemetryP
         }
     }
 
-    private static object CreateRecord(ApplicationInsights.Channel.ITelemetry item) => item switch
+    private static object CreateEventJsonModel(EventTelemetry @event) => new
     {
-        EventTelemetry e => new
-        {
-            type = "Event",
-            name = e.Name,
-            time = e.Timestamp,
-            properties = e.Properties,
-            metrics = e.Metrics,
-            sessionId = e.Context?.Session?.Id
-        },
-        ExceptionTelemetry ex => new
-        {
-            type = "Exception",
-            message = ex.Exception?.Message,
-            ex.Exception?.StackTrace,
-            time = ex.Timestamp,
-            properties = ex.Properties
-        },
-        TraceTelemetry t => new
-        {
-            type = "Trace",
-            message = t.Message,
-            severity = t.SeverityLevel,
-            time = t.Timestamp,
-            properties = t.Properties
-        },
-        MetricTelemetry m => new
-        {
-            type = "Metric",
-            name = m.Name,
-            value = m.Sum,
-            count = m.Count,
-            time = m.Timestamp,
-            properties = m.Properties
-        },
-        _ => new
-        {
-            type = item.GetType().Name,
-            time = item.Timestamp
-        }
+        name = @event.Name,
+        timestamp = @event.Timestamp,
+        metrics = @event.Metrics,
+        properties = @event.Properties.OrderBy(kv => kv.Key).ToDictionary()
     };
 }
