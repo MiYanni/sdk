@@ -23,6 +23,8 @@ public class Telemetry : ITelemetry
     private string? _diskLogPath;
 
     private const string ConnectionString = "InstrumentationKey=74cc1c9e-3e6e-4d05-b3fc-dde9101d0254";
+    // TODO: Remove.
+    //private const string ConnectionString = "InstrumentationKey=2c4b2aec-276e-4421-95d9-3da4046d428d";
 
     public bool Enabled { get; }
 
