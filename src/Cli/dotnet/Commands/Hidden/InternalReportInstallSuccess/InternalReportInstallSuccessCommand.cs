@@ -4,7 +4,6 @@
 #nullable disable
 
 using System.CommandLine;
-using Microsoft.DotNet.Cli.Extensions;
 using Microsoft.DotNet.Cli.Telemetry;
 using Microsoft.DotNet.Cli.Utils;
 using Microsoft.DotNet.Configurer;

@@ -295,6 +295,7 @@ public class Program
         PerformanceLogEventSource.Log.TelemetryClientFlushStart();
         TelemetryClient.Flush();
         PerformanceLogEventSource.Log.TelemetryClientFlushStop();
+        Thread.Sleep(30_000);
 
         TelemetryClient.Dispose();
 

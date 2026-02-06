@@ -20,11 +20,13 @@ public class Telemetry : ITelemetry
     private FrozenDictionary<string, string>? _commonProperties = null;
     private FrozenDictionary<string, double>? _commonMeasurements = null;
     private Task? _trackEventTask = null;
-    private string? _diskLogPath;
+    //private string? _diskLogPath;
 
     private const string ConnectionString = "InstrumentationKey=74cc1c9e-3e6e-4d05-b3fc-dde9101d0254";
     // TODO: Remove.
     //private const string ConnectionString = "InstrumentationKey=2c4b2aec-276e-4421-95d9-3da4046d428d";
+    // TODO: Remove.
+    //private const string ConnectionString = "InstrumentationKey=c176eac8-d596-4455-91b4-2eac2694e54d";
 
     public bool Enabled { get; }
 
@@ -121,10 +123,13 @@ public class Telemetry : ITelemetry
 
         _trackEventTask.Wait();
 
-        if (!string.IsNullOrWhiteSpace(_diskLogPath))
-        {
-            DiskLogTelemetryProcessor.WriteLog(_diskLogPath);
-        }
+        //if (!string.IsNullOrWhiteSpace(_diskLogPath))
+        //{
+        //    DiskLogTelemetryProcessor.WriteLog(_diskLogPath);
+        //}
+
+        _client?.Flush();
+        Task.Delay(1000).Wait();
     }
 
     // Adding dispose on graceful shutdown per https://github.com/microsoft/ApplicationInsights-dotnet/issues/1152#issuecomment-518742922
@@ -135,6 +140,7 @@ public class Telemetry : ITelemetry
             _client.TelemetryConfiguration.Dispose();
             _client = null;
         }
+        Task.Delay(1000).Wait();
     }
 
     public void ThreadBlockingTrackEvent(string eventName, IDictionary<string, string> properties, IDictionary<string, double> measurements)
@@ -150,22 +156,30 @@ public class Telemetry : ITelemetry
     {
         try
         {
-            var persistenceChannel = new PersistenceChannel.PersistenceChannel(sendersCount: _senderCount)
-            {
-                SendingInterval = TimeSpan.FromMilliseconds(1)
-            };
+            var telemetryStoragePath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_STORAGE_PATH");
+
+            var persistenceChannel = string.IsNullOrWhiteSpace(telemetryStoragePath)
+                ? new PersistenceChannel.PersistenceChannel(sendersCount: _senderCount)
+                : new PersistenceChannel.PersistenceChannel(storageDirectoryPath: telemetryStoragePath, sendersCount: _senderCount);
+
+            persistenceChannel.SendingInterval = TimeSpan.FromMilliseconds(1);
 
             var config = TelemetryConfiguration.CreateDefault();
-            config.TelemetryChannel = persistenceChannel;
+            var diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
+            config.TelemetryChannel = string.IsNullOrWhiteSpace(diskLogPath)
+                ? persistenceChannel
+                : new LoggingTelemetryChannel(persistenceChannel, diskLogPath);
+
+            //config.TelemetryChannel = persistenceChannel;
             config.ConnectionString = ConnectionString;
 
-            _diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
-            if (!string.IsNullOrWhiteSpace(_diskLogPath))
-            {
-                config.TelemetryProcessorChainBuilder
-                    .Use(next => new DiskLogTelemetryProcessor(next))
-                    .Build();
-            }
+            //_diskLogPath = Environment.GetEnvironmentVariable("DOTNET_CLI_TELEMETRY_LOG_PATH");
+            //if (!string.IsNullOrWhiteSpace(_diskLogPath))
+            //{
+            //    config.TelemetryProcessorChainBuilder
+            //        .Use(next => new DiskLogTelemetryProcessor(next))
+            //        .Build();
+            //}
 
             _client = new TelemetryClient(config);
             _client.Context.Session.Id = CurrentSessionId;
