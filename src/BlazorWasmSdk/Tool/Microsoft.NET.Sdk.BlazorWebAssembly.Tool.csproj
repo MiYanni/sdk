@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine" ExcludeAssets="buildtransitive" />
   </ItemGroup>
 
 </Project>

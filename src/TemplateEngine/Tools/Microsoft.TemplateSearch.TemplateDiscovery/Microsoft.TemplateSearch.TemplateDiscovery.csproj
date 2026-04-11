@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="NuGet.Configuration" />
     <PackageReference Include="NuGet.Protocol" />
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine" ExcludeAssets="buildtransitive" />
   </ItemGroup>
 
   <ItemGroup>

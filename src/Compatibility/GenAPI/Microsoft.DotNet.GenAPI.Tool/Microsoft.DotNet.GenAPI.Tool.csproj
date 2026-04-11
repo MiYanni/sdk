@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine" ExcludeAssets="buildtransitive" />
     <ProjectReference Include="..\Microsoft.DotNet.GenAPI\Microsoft.DotNet.GenAPI.csproj" />
   </ItemGroup>
 

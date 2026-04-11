@@ -88,7 +88,7 @@
     <PackageReference Include="Microsoft.NET.HostModel" />
     <PackageReference Include="Microsoft.TemplateEngine.Orchestrator.RunnableProjects" />
     <PackageReference Include="Spectre.Console" />
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine" ExcludeAssets="buildtransitive" />
     <PackageReference Include="Microsoft.Deployment.DotNet.Releases" />
     <PackageReference Include="System.ServiceProcess.ServiceController" />
     <PackageReference Include="Microsoft.Windows.CsWin32" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" Condition="'$(TargetOS)' == 'windows'">

@@ -37,7 +37,7 @@
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
 
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.CommandLine" ExcludeAssets="buildtransitive" />
   </ItemGroup>
 
   <ItemGroup>
