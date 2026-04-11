@@ -193,7 +193,7 @@ internal sealed class MSBuildForwardingAppWithoutLogging
             MSBuildExeName);
     }
 
-    public static string GetMSBuildSDKsPath()
+    private static string GetMSBuildSDKsPath()
     {
         var envMSBuildSDKsPath = Environment.GetEnvironmentVariable("MSBuildSDKsPath");
 

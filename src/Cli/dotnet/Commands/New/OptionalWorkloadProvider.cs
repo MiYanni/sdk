@@ -31,13 +31,14 @@ internal class OptionalWorkloadProvider : ITemplatePackageProvider
     {
         var list = new List<TemplatePackage>();
         var optionalWorkloadLocator = new TemplateLocator.TemplateLocator();
-        var sdksDirectory = new DirectoryInfo(MSBuildForwardingAppWithoutLogging.GetMSBuildSDKsPath());
-        var sdkDirectory = sdksDirectory?.Parent;
-        var sdkVersion = sdkDirectory?.Name;
-        var dotnetRootPath = sdkDirectory?.Parent?.Parent;
+#pragma warning disable IL3000 // Avoid accessing Assembly file path when publishing as a single file
+        var sdkDirectory = Path.GetDirectoryName(typeof(DotnetFiles).Assembly.Location);
+#pragma warning restore IL3000 // Avoid accessing Assembly file path when publishing as a single file
+        var sdkVersion = Path.GetFileName(sdkDirectory);
+        var dotnetRootPath = Path.GetDirectoryName(Path.GetDirectoryName(sdkDirectory));
         string userProfileDir = CliFolderPathCalculator.DotnetUserProfileFolderPath;
 
-        var packages = optionalWorkloadLocator.GetDotnetSdkTemplatePackages(sdkVersion, dotnetRootPath?.FullName, userProfileDir);
+        var packages = optionalWorkloadLocator.GetDotnetSdkTemplatePackages(sdkVersion, dotnetRootPath, userProfileDir);
         var fileSystem = _environmentSettings.Host.FileSystem;
         foreach (var packageInfo in packages)
         {
